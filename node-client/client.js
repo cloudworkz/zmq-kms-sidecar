@@ -1,7 +1,5 @@
 "use strict";
 
-const ZMQ = require("zeromq");
-
 const ENCRYPT_BUFFER = Buffer.from([0]);
 const DECRYPT_BUFFER = Buffer.from([1]);
 
@@ -34,9 +32,6 @@ const decrypt = (socket, cipherStr, encoding = "hex") => {
         socket.send(ct, 0);
     });
 };
-
-const socket = ZMQ.socket("req");
-socket.connect("tcp://127.0.0.1:5560");
 
 const call1 = (async () => {
     const plaintext = "3384395a-0dd4-491a-b0c1-f29e3f330933-a";

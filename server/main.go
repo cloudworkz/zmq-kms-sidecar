@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	zmq "github.com/pebbe/zmq4"
 )
@@ -17,12 +18,26 @@ func main() {
 	responder.Bind("tcp://*:5560")
 	fmt.Println("Listening on port 5560.")
 
-	projectID := "rd-bigdata-int-v002"
-	keyRingID := "eden"
-	locationID := "europe-west1"
-	cryptoKeyID := "eden-reference"
-	cryptoKeyVersion := "1"
-	cryptoKeyName := getKeyName(projectID, keyRingID, locationID, cryptoKeyID, cryptoKeyVersion)
+	args := os.Args
+	if len(args) != 2 {
+		panic("Requires exactly one argument: Config path.")
+	}
+
+	filePath := args[1]
+	config := readConfig(filePath)
+	/*
+		{
+			"projectID": "",
+			"keyRingID": "",
+			"locationID": "europe-west1",
+			"cryptoKeyID": "",
+			"cryptoKeyVersion": "1"
+		}
+	*/
+
+	cryptoKeyName := getKeyName(config["projectID"], config["keyRingID"],
+		config["locationID"], config["cryptoKeyID"], config["cryptoKeyVersion"])
+	fmt.Println(cryptoKeyName)
 
 	publicKey, err := getAsymmetricPublicKey(cryptoKeyName)
 	if err != nil {
