@@ -1,93 +1,49 @@
 "use strict";
 
-const ENCRYPT_BUFFER = Buffer.from([0]);
-const DECRYPT_BUFFER = Buffer.from([1]);
+const assert = require("assert");
+const ZMQKMS = require("./zmqkms.js");
+const zmqkms = new ZMQKMS();
+zmqkms.on("error", console.error);
 
-const encrypt = (socket, plaintextStr, encoding = "utf8") => {
-    return new Promise((resolve, reject) => {
-        const pt = Buffer.concat([ENCRYPT_BUFFER, Buffer.from(plaintextStr, encoding)]);
-        socket.once("message", (message) => {
+const call = async (i, log = false, decrypt = true) => {
 
-            if (message.length <= 3) {
-                return reject(new Error("Failed to encrypt."));
-            }
+    const plaintext = `3384395a-0dd4-491a-b0c1-f29e3f330933-${i}`;
+    if (log) {
+        console.log("plaintext:\n" + plaintext + "\n");
+    }
 
-            return resolve(message.toString("hex"));
-        });
-        socket.send(pt, 0);
-    });
+    const cipher = await zmqkms.encrypt(plaintext);
+    if (log) {
+        console.log("encrypted:\n" + cipher + "\n");
+    }
+
+    if (decrypt) {
+
+        const decipher = await zmqkms.decrypt(cipher);
+        if (log) {
+            console.log("decrypted:\n" + decipher + "\n");
+        }
+
+        assert.equal(plaintext, decipher);
+    }
 };
 
-const decrypt = (socket, cipherStr, encoding = "hex") => {
-    return new Promise((resolve, reject) => {
-        const ct = Buffer.concat([DECRYPT_BUFFER, Buffer.from(cipherStr, encoding)]);
-        socket.once("message", (message) => {
+(async () => {
 
-            if (message.length <= 3) {
-                return reject(new Error("Failed to encrypt."));
-            }
+    // test
+    await call("x", true);
 
-            return resolve(message.toString("utf8"));
-        });
-        socket.send(ct, 0);
+    const startT = Date.now();
+    const calls = [];
+    for (let i = 0; i < 100000; i++) {
+        // we are not making any decrypt calls to the google api
+        // otherwise this will become an expensive benchmark
+        calls.push(call(i, false, false));
+    }
+
+    await Promise.all(calls).then(() => {
+        const tookMs = Date.now() - startT;
+        console.log("Done.. took:", tookMs, "ms");
+        zmqkms.close();
     });
-};
-
-const call1 = (async () => {
-    const plaintext = "3384395a-0dd4-491a-b0c1-f29e3f330933-a";
-    console.log("plaintext:\n" + plaintext + "\n");
-
-    const ctT = Date.now();
-    const cipher = await encrypt(socket, plaintext);
-    const cteT = Date.now();
-
-    const dtT = Date.now();
-    const decipher = await decrypt(socket, cipher);
-    const dteT = Date.now();
-
-    console.log("encrypted:\n" + cipher + "\n", (cteT - ctT));
-    console.log("decrypted:\n" + decipher + "\n", (dteT - dtT));
-    console.log("eq:", plaintext === decipher);
-})();
-
-const call2 = (async () => {
-    const plaintext = "3384395a-0dd4-491a-b0c1-f29e3f330933-b";
-    console.log("plaintext:\n" + plaintext + "\n");
-
-    const ctT = Date.now();
-    const cipher = await encrypt(socket, plaintext);
-    const cteT = Date.now();
-
-    const dtT = Date.now();
-    const decipher = await decrypt(socket, cipher);
-    const dteT = Date.now();
-
-    console.log("encrypted:\n" + cipher + "\n", (cteT - ctT));
-    console.log("decrypted:\n" + decipher + "\n", (dteT - dtT));
-    console.log("eq:", plaintext === decipher);
-})();
-
-const call3 = (async () => {
-    const plaintext = "3384395a-0dd4-491a-b0c1-f29e3f330933-c";
-    console.log("plaintext:\n" + plaintext + "\n");
-
-    const ctT = Date.now();
-    const cipher = await encrypt(socket, plaintext);
-    const cteT = Date.now();
-
-    const dtT = Date.now();
-    const decipher = await decrypt(socket, cipher);
-    const dteT = Date.now();
-
-    console.log("encrypted:\n" + cipher + "\n", (cteT - ctT));
-    console.log("decrypted:\n" + decipher + "\n", (dteT - dtT));
-    console.log("eq:", plaintext === decipher);
-})();
-
-Promise.all([
-    call1,
-    call2,
-    call3
-]).then(() => {
-    socket.close();
-}).catch(console.log);
+})().catch(console.error);

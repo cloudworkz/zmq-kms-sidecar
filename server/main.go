@@ -7,16 +7,7 @@ import (
 	zmq "github.com/pebbe/zmq4"
 )
 
-func removeIndex(s []byte, index int) []byte {
-	return append(s[:index], s[index+1:]...)
-}
-
 func main() {
-
-	responder, _ := zmq.NewSocket(zmq.REP)
-	defer responder.Close()
-	responder.Bind("tcp://*:5560")
-	fmt.Println("Listening on port 5560.")
 
 	args := os.Args
 	if len(args) != 2 {
@@ -27,6 +18,7 @@ func main() {
 	config := readConfig(filePath)
 	/*
 		{
+			"host": "tcp://*:5560",
 			"projectID": "",
 			"keyRingID": "",
 			"locationID": "europe-west1",
@@ -34,6 +26,11 @@ func main() {
 			"cryptoKeyVersion": "1"
 		}
 	*/
+
+	responder, _ := zmq.NewSocket(zmq.REP)
+	defer responder.Close()
+	responder.Bind(config["host"])
+	fmt.Println("Listening on at: " + config["host"])
 
 	cryptoKeyName := getKeyName(config["projectID"], config["keyRingID"],
 		config["locationID"], config["cryptoKeyID"], config["cryptoKeyVersion"])
@@ -49,28 +46,33 @@ func main() {
 
 	for {
 		brequest, _ := responder.RecvBytes(0)
-		hbyte := brequest[0]
-		brequest = removeIndex(brequest, 0)
+		hbyte := brequest[0]     // first message byte is the command header
+		idbyte := brequest[1:37] // next 36 bytes are the uuidv4 message identifier
+		brequest = brequest[37:] // rest of the message is the payload
+
+		// fmt.Printf("Header: [%b]\n", hbyte)
+		// fmt.Printf("ID: [%s]\n", string(idbyte))
+		// fmt.Printf("Payload: [%s]\n", hex.EncodeToString(brequest))
 
 		if hbyte == byte(0) {
 			cipher, err := encryptRSA(publicKey, brequest)
 			if err != nil {
 				fmt.Printf("Failed to encrypt: [%s]\n", err)
-				responder.SendBytes(berrorResponse, 0)
+				responder.SendBytes(append(idbyte, berrorResponse...), 0)
 			} else {
-				responder.SendBytes(cipher, 0)
+				responder.SendBytes(append(idbyte, cipher...), 0)
 			}
 		} else if hbyte == byte(1) {
 			decCipher, err := decryptRSA(cryptoKeyName, brequest)
 			if err != nil {
-				fmt.Printf("Failed to encrypt: [%s]\n", err)
-				responder.SendBytes(berrorResponse, 0)
+				fmt.Printf("Failed to decrypt: [%s]\n", err)
+				responder.SendBytes(append(idbyte, berrorResponse...), 0)
 			} else {
-				responder.SendBytes(decCipher, 0)
+				responder.SendBytes(append(idbyte, decCipher...), 0)
 			}
 		} else {
 			fmt.Printf("Unsupported operation: [%b]\n", hbyte)
-			responder.SendBytes(berrorResponse, 0)
+			responder.SendBytes(append(idbyte, berrorResponse...), 0)
 		}
 	}
 }
