@@ -2,17 +2,16 @@
 
 # What?
 
-This is sidecar that helps you to work with Google Cloud KMS from Node.js
+This is a sidecar that helps you to work with Google Cloud KMS from Node.js
 
 # How?
 
 You basically run a small go server that communicates with your node app using
-a small byte based procol on top of zeromq request and response pattern.
+a small byte based protocol on top of the zeromq request and response pattern.
 
 # Why?
 
-As of now, Node.js does not correctly support the required OEP padding and
-asymmetric public key handling is horrible in it anyway.
+As of now, Node.js does not correctly support the required OEP padding.
 
 # Trying it out locally
 
@@ -52,7 +51,7 @@ yarn
 yarn start
 ```
 
-## Using this in production
+# Using this in production
 
 Its quite easy to wrap the server component in a Docker container.
 All you need is the compiled binary and your JSON config file.
