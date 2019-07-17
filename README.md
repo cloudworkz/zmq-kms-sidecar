@@ -32,7 +32,7 @@ and fill out the following content:
 ```
 
 You can then run the following to compile and start the server:
-(Please Note: This requires `Go` being installed on your computer)
+(Please Note: This requires `Go`, `pkg-config` and `zmq` being installed on your computer)
 
 ```bash
 cd ./server
