@@ -7,19 +7,20 @@ zmqkms.on("error", console.error);
 
 const call = async (i, log = false, decrypt = true) => {
 
+    const cryptoKeyId = "super-secret-key"
     const plaintext = `3384395a-0dd4-491a-b0c1-f29e3f330933-${i}`;
     if (log) {
         console.log("plaintext:\n" + plaintext + "\n");
     }
 
-    const cipher = await zmqkms.encrypt(plaintext);
+    const cipher = await zmqkms.encrypt(cryptoKeyId, plaintext);
     if (log) {
         console.log("encrypted:\n" + cipher + "\n");
     }
 
     if (decrypt) {
 
-        const decipher = await zmqkms.decrypt(cipher);
+        const decipher = await zmqkms.decrypt(cryptoKeyId, cipher);
         if (log) {
             console.log("decrypted:\n" + decipher + "\n");
         }

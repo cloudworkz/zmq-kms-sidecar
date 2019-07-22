@@ -19,9 +19,9 @@ class ZMQKMS extends EventEmitter {
         this.socket.on("error", (error) => this.emit("error", error));
     }
 
-    encrypt(plaintextStr, encoding = "utf8") {
+    encrypt(cryptoKeyId, plaintextStr, encoding = "utf8") {
         return new Promise((resolve, reject) => {
-            this.socket.send(ENCRYPT_BUFFER, Buffer.from(plaintextStr, encoding), (error, message) => {
+            this.socket.send(ENCRYPT_BUFFER, Buffer.from(JSON.stringify({cryptoKeyId, plaintext: plaintextStr}), encoding), (error, message) => {
 
                 if (error) {
                     return reject(error);
@@ -36,9 +36,9 @@ class ZMQKMS extends EventEmitter {
         });
     }
 
-    decrypt(cipherStr, encoding = "hex") {
+    decrypt(cryptoKeyId, cipherStr, encoding = "hex") {
         return new Promise((resolve, reject) => {
-            this.socket.send(DECRYPT_BUFFER, Buffer.from(cipherStr, encoding), (error, message) => {
+            this.socket.send(DECRYPT_BUFFER, Buffer.from(JSON.stringify({cryptoKeyId, cipher: cipherStr}), encoding), (error, message) => {
 
                 if (error) {
                     return reject(error);
