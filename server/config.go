@@ -14,8 +14,8 @@ type config struct {
 }
 
 type cryptoKey struct {
-	ID      string `json:"id"`
-	Version string `json:"version"`
+	ID      string `json:"cryptoKeyId"`
+	Version string `json:"cryptoKeyVersion"`
 }
 
 func readConfig(filePath string) config {

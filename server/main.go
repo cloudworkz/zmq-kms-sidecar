@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -94,9 +95,16 @@ func main() {
 				continue
 			}
 
+			cipherBytes, err := hex.DecodeString(request.Cipher)
+			if err != nil {
+				fmt.Printf("Failed to decode hex string: [%b]\n", hbyte)
+				responder.SendBytes(append(idbyte, berrorResponse...), 0)
+				continue
+			}
+
 			cryptoKeyName := getKeyName(config.ProjectID, config.KeyRingID,
 				config.LocationID, request.CryptoKeyID, version)
-			decCipher, err := decryptRSA(cryptoKeyName, []byte(request.Cipher))
+			decCipher, err := decryptRSA(cryptoKeyName, cipherBytes)
 			if err != nil {
 				fmt.Printf("Failed to decrypt: [%s]\n", err)
 				responder.SendBytes(append(idbyte, berrorResponse...), 0)

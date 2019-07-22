@@ -7,7 +7,7 @@ zmqkms.on("error", console.error);
 
 const call = async (i, log = false, decrypt = true) => {
 
-    const cryptoKeyId = "super-secret-key"
+    const cryptoKeyId = "eden-reference"
     const plaintext = `3384395a-0dd4-491a-b0c1-f29e3f330933-${i}`;
     if (log) {
         console.log("plaintext:\n" + plaintext + "\n");
