@@ -25,9 +25,17 @@ and fill out the following content:
     "host": "tcp://*:5560",
     "projectID": "your-gcp-project",
     "keyRingID": "your-key-ring-id",
-    "locationID": "europe-west1", // your location
-    "cryptoKeyID": "your-key-name",
-    "cryptoKeyVersion": "1" // your key version
+    "locationID": "europe-west1",
+    "cryptoKeys": [
+        {
+            "cryptoKeyID": "your-key-name-1",
+            "cryptoKeyVersion": "1",
+        },
+        {
+            "cryptoKeyID": "your-key-name-2",
+            "cryptoKeyVersion": "4",
+        }
+    ]
 }
 ```
 
